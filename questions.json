@@ -1,0 +1,35 @@
+[
+  {
+    "question": "Which component of the Java Architecture is primarily responsible for converting Java bytecode into machine-specific code at runtime?",
+    "options": [
+      { "text": "Java Virtual Machine (JVM)", "isCorrect": true },
+      { "text": "Java Development Kit (JDK)", "isCorrect": false },
+      { "text": "Java Compiler (javac)", "isCorrect": false },
+      { "text": "Java Runtime Environment (JRE)", "isCorrect": false }
+    ],
+    "rationale": "The JVM (specifically its Just-In-Time or JIT compiler) interprets and compiles bytecode into the native machine language of the host OS at runtime.",
+    "hint": "Think about the execution engine that sits inside the JRE."
+  },
+  {
+    "question": "What happens if a subclass defines a static method with the exact same signature as a static method in its superclass?",
+    "options": [
+      { "text": "The subclass method hides the superclass method.", "isCorrect": true },
+      { "text": "It results in a compile-time error.", "isCorrect": false },
+      { "text": "The subclass method overrides the superclass method.", "isCorrect": false },
+      { "text": "Both methods execute sequentially.", "isCorrect": false }
+    ],
+    "rationale": "This is known as Method Hiding. Static methods belong to the class, not the instance, so they are resolved at compile time.",
+    "hint": "Static methods are resolved based on the reference type, not the object type."
+  },
+  {
+    "question": "In a Spring Boot REST application, which annotation binds the `{id}` portion of `/api/employees/{id}` to a method parameter?",
+    "options": [
+      { "text": "@PathVariable", "isCorrect": true },
+      { "text": "@RequestParam", "isCorrect": false },
+      { "text": "@RequestBody", "isCorrect": false },
+      { "text": "@PathParam", "isCorrect": false }
+    ],
+    "rationale": "@PathVariable extracts values embedded directly within the URI path structure itself.",
+    "hint": "Look closely at the brackets `{id}` in the URI. They define a variable within the path."
+  }
+]
