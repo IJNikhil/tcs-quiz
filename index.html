@@ -101,7 +101,7 @@
         // ==========================================
         // 🚨 ADD YOUR GOOGLE APPS SCRIPT URL BELOW! 
         // ==========================================
-        const API_URL = "https://script.google.com/macros/s/AKfycbwDWnKH5nY9UX7YlIcWN3jIKozXhQXdKXSUTmbZ-UQuPzV5p3Y3Bo0EbiHBfRS5EuNX/exec";
+        const API_URL = "https://script.google.com/macros/s/AKfycbypzHAEAf8DQTKpuv9BTrOS5Dk3Hg9p8eFxxHvdxOAqB12xZMG0woppdbRLqD8g765m/exec";
         
         let allQuestions = [];
         let state = { activeQuestions: [], currentIndex: 0, stats: { right: 0, wrong: 0, skipped: 0 }, answeredCurrent: false };
@@ -111,7 +111,7 @@
         function shuffleArray(arr) { for(let i=arr.length-1; i>0; i--) { const j = Math.floor(Math.random() * (i+1)); [arr[i], arr[j]] = [arr[j], arr[i]]; } return arr; }
 
         async function init() {
-            if(API_URL === "https://script.google.com/macros/s/AKfycbwDWnKH5nY9UX7YlIcWN3jIKozXhQXdKXSUTmbZ-UQuPzV5p3Y3Bo0EbiHBfRS5EuNX/exec") {
+            if(API_URL === "https://script.google.com/macros/s/AKfycbypzHAEAf8DQTKpuv9BTrOS5Dk3Hg9p8eFxxHvdxOAqB12xZMG0woppdbRLqD8g765m/exec") {
                 document.getElementById('view-loading').innerHTML = `<p class="text-red-500 font-bold p-6 bg-red-50 rounded-2xl">Setup Required:<br>Paste your Web App URL at line 178.</p>`;
                 return;
             }
