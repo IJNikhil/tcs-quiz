@@ -1,270 +1,729 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Mastery Quiz</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Production-safe Tailwind -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
+
+    <!-- Google Font -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f0f4f9; }
-        .material-card { background: white; border-radius: 28px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03); }
-        .option-btn { transition: all 0.2s ease; border: 1px solid #dadce0; }
-        .option-btn:hover:not(:disabled) { background-color: #f8f9fa; border-color: #1a73e8; box-shadow: inset 0 0 0 1px #1a73e8;}
-        
-        .selected-correct { border-color: #188038 !important; background-color: #e6f4ea !important; }
-        .selected-wrong { border-color: #d93025 !important; background-color: #fce8e6 !important; }
-        .actual-correct { border-color: #188038 !important; background-color: #e6f4ea !important; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f9;
+        }
+
+        .material-card {
+            background: white;
+            border-radius: 28px;
+            box-shadow:
+                0 4px 6px -1px rgba(0, 0, 0, 0.05),
+                0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        }
+
+        .option-btn {
+            transition: all 0.2s ease;
+            border: 1px solid #dadce0;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            background-color: #f8f9fa;
+            border-color: #1a73e8;
+            box-shadow: inset 0 0 0 1px #1a73e8;
+        }
+
+        .selected-correct {
+            border-color: #188038 !important;
+            background-color: #e6f4ea !important;
+        }
+
+        .selected-wrong {
+            border-color: #d93025 !important;
+            background-color: #fce8e6 !important;
+        }
+
+        .actual-correct {
+            border-color: #188038 !important;
+            background-color: #e6f4ea !important;
+        }
     </style>
 </head>
+
 <body class="text-gray-800 min-h-screen flex items-center justify-center p-4 md:p-8">
 
     <div id="app" class="w-full max-w-3xl material-card p-8 md:p-12 relative overflow-hidden">
-        
+
+        <!-- Loading -->
         <div id="view-loading" class="text-center py-12">
             <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
             <p class="text-gray-500 font-medium">Connecting to Database...</p>
         </div>
 
+        <!-- Setup -->
         <div id="view-setup" class="hidden">
             <div class="text-center mb-8">
-                <h1 class="text-3xl font-bold text-gray-900 mb-2">Mastery Assessment</h1>
-                <p class="text-gray-500">Database connected: <span id="db-count" class="font-bold text-blue-600">0</span> questions available.</p>
+                <h1 class="text-3xl font-bold text-gray-900 mb-2">
+                    Mastery Assessment
+                </h1>
+
+                <p class="text-gray-500">
+                    Database connected:
+                    <span id="db-count" class="font-bold text-blue-600">0</span>
+                    questions available.
+                </p>
             </div>
 
             <div class="space-y-4 max-w-md mx-auto">
-                <button onclick="startQuiz(10)" class="w-full py-3.5 px-6 bg-white border border-gray-200 text-gray-700 rounded-2xl font-medium hover:bg-gray-50 transition">Quick Review (10 Questions)</button>
-                <button onclick="startQuiz(20)" class="w-full py-3.5 px-6 bg-white border border-gray-200 text-gray-700 rounded-2xl font-medium hover:bg-gray-50 transition">Standard Test (20 Questions)</button>
-                <button onclick="startQuiz('all')" class="w-full py-3.5 px-6 bg-blue-600 text-white rounded-2xl font-medium hover:bg-blue-700 transition shadow-md">Comprehensive (All Questions)</button>
+                <button onclick="startQuiz(10)"
+                    class="w-full py-3.5 px-6 bg-white border border-gray-200 text-gray-700 rounded-2xl font-medium hover:bg-gray-50 transition">
+                    Quick Review (10 Questions)
+                </button>
+
+                <button onclick="startQuiz(20)"
+                    class="w-full py-3.5 px-6 bg-white border border-gray-200 text-gray-700 rounded-2xl font-medium hover:bg-gray-50 transition">
+                    Standard Test (20 Questions)
+                </button>
+
+                <button onclick="startQuiz('all')"
+                    class="w-full py-3.5 px-6 bg-blue-600 text-white rounded-2xl font-medium hover:bg-blue-700 transition shadow-md">
+                    Comprehensive (All Questions)
+                </button>
             </div>
         </div>
 
+        <!-- Quiz -->
         <div id="view-quiz" class="hidden">
+
             <div class="flex justify-between items-center mb-6">
-                <div class="bg-blue-50 text-blue-700 px-4 py-1.5 rounded-full text-sm font-semibold tracking-wide"><span id="question-counter">1 / 10</span></div>
-                <button onclick="toggleHint()" class="text-gray-500 hover:text-blue-600 hover:bg-blue-50 px-4 py-1.5 rounded-full text-sm font-medium transition">💡 Hint</button>
-            </div>
-            
-            <div class="w-full bg-gray-100 rounded-full h-1.5 mb-8 overflow-hidden">
-                <div id="progress-bar" class="bg-blue-600 h-1.5 rounded-full transition-all duration-500" style="width: 0%"></div>
-            </div>
-
-            <div id="hint-box" class="hidden bg-[#e8f0fe] text-[#1967d2] p-5 rounded-2xl mb-6 text-sm"></div>
-            
-            <h2 id="question-text" class="text-xl md:text-2xl font-medium mb-8">Loading...</h2>
-            
-            <div id="options-container" class="space-y-3 mb-8"></div>
-            <div id="rationale-box" class="hidden p-5 rounded-2xl mb-8 text-sm"></div>
-
-            <div class="flex justify-between items-center border-t border-gray-100 pt-6">
-                <button id="skip-btn" onclick="handleSkip()" class="px-6 py-2.5 text-gray-500 hover:bg-gray-100 rounded-full font-medium">Skip Question</button>
-                <button id="next-btn" onclick="nextQuestion()" class="hidden px-8 py-2.5 bg-blue-600 text-white rounded-full font-medium hover:bg-blue-700 ml-auto shadow-md">Continue →</button>
-            </div>
-        </div>
-
-        <div id="view-summary" class="hidden text-center py-8">
-            <h2 class="text-3xl font-bold mb-3 text-gray-900">Quiz Complete!</h2>
-            <p class="text-gray-500 mb-10">Score: <span id="final-score" class="font-bold text-blue-600 text-xl">0/0</span></p>
-            <button onclick="window.location.reload();" class="px-8 py-3.5 bg-gray-900 text-white rounded-full font-medium hover:bg-black transition shadow-lg">Start New Session</button>
-        </div>
-
-        <div id="view-admin" class="hidden">
-            <div class="flex justify-between items-center mb-6 pb-4 border-b border-gray-100">
-                <h2 class="text-2xl font-bold text-gray-900">Live Database Manager</h2>
-                <button onclick="showView('view-setup')" class="text-sm font-medium text-blue-600 hover:bg-blue-50 px-4 py-2 rounded-full">Close Admin</button>
-            </div>
-             
-            <div class="bg-white border border-gray-200 rounded-3xl p-6 space-y-4 text-sm shadow-sm">
-                <p class="text-gray-600 mb-2">Adding questions here will push them directly to Google Sheets instantly.</p>
-                <div id="form-feedback" class="hidden font-bold p-3 rounded-xl"></div>
-                
-                <textarea id="ad-q" placeholder="Question Text *" class="w-full border border-gray-200 rounded-2xl p-4 bg-gray-50" rows="2"></textarea>
-                
-                <div class="grid gap-3">
-                    <div class="flex items-center gap-3 bg-gray-50 p-2 rounded-xl border border-gray-200"><input type="radio" name="ad-correct" value="0" checked class="ml-3"><input type="text" id="ad-o0" placeholder="Option 1 *" class="w-full bg-transparent border-none outline-none"></div>
-                    <div class="flex items-center gap-3 bg-gray-50 p-2 rounded-xl border border-gray-200"><input type="radio" name="ad-correct" value="1" class="ml-3"><input type="text" id="ad-o1" placeholder="Option 2 *" class="w-full bg-transparent border-none outline-none"></div>
-                    <div class="flex items-center gap-3 bg-gray-50 p-2 rounded-xl border border-gray-200"><input type="radio" name="ad-correct" value="2" class="ml-3"><input type="text" id="ad-o2" placeholder="Option 3 *" class="w-full bg-transparent border-none outline-none"></div>
-                    <div class="flex items-center gap-3 bg-gray-50 p-2 rounded-xl border border-gray-200"><input type="radio" name="ad-correct" value="3" class="ml-3"><input type="text" id="ad-o3" placeholder="Option 4 *" class="w-full bg-transparent border-none outline-none"></div>
+                <div class="bg-blue-50 text-blue-700 px-4 py-1.5 rounded-full text-sm font-semibold tracking-wide">
+                    <span id="question-counter">1 / 10</span>
                 </div>
 
-                <textarea id="ad-rationale" placeholder="Rationale (Why is it correct?)" class="w-full border border-gray-200 rounded-2xl p-4 bg-gray-50" rows="2"></textarea>
-                <input type="text" id="ad-hint" placeholder="Hint text (Optional)" class="w-full border border-gray-200 rounded-2xl p-4 bg-gray-50">
-                
-                <button id="submit-btn" onclick="pushToGoogleSheets()" class="w-full py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition mt-2">Publish to Database</button>
+                <button onclick="toggleHint()"
+                    class="text-gray-500 hover:text-blue-600 hover:bg-blue-50 px-4 py-1.5 rounded-full text-sm font-medium transition">
+                    💡 Hint
+                </button>
+            </div>
+
+            <div class="w-full bg-gray-100 rounded-full h-1.5 mb-8 overflow-hidden">
+                <div id="progress-bar"
+                    class="bg-blue-600 h-1.5 rounded-full transition-all duration-500"
+                    style="width: 0%">
+                </div>
+            </div>
+
+            <div id="hint-box"
+                class="hidden bg-[#e8f0fe] text-[#1967d2] p-5 rounded-2xl mb-6 text-sm">
+            </div>
+
+            <h2 id="question-text"
+                class="text-xl md:text-2xl font-medium mb-8">
+                Loading...
+            </h2>
+
+            <div id="options-container" class="space-y-3 mb-8"></div>
+
+            <div id="rationale-box"
+                class="hidden p-5 rounded-2xl mb-8 text-sm">
+            </div>
+
+            <div class="flex justify-between items-center border-t border-gray-100 pt-6">
+
+                <button id="skip-btn"
+                    onclick="handleSkip()"
+                    class="px-6 py-2.5 text-gray-500 hover:bg-gray-100 rounded-full font-medium">
+                    Skip Question
+                </button>
+
+                <button id="next-btn"
+                    onclick="nextQuestion()"
+                    class="hidden px-8 py-2.5 bg-blue-600 text-white rounded-full font-medium hover:bg-blue-700 ml-auto shadow-md">
+                    Continue →
+                </button>
             </div>
         </div>
 
-        <button onclick="verifyAdmin()" class="absolute bottom-4 right-6 text-xs font-medium text-gray-300 hover:text-gray-500 uppercase">Admin</button>
+        <!-- Summary -->
+        <div id="view-summary" class="hidden text-center py-8">
+
+            <h2 class="text-3xl font-bold mb-3 text-gray-900">
+                Quiz Complete!
+            </h2>
+
+            <p class="text-gray-500 mb-10">
+                Score:
+                <span id="final-score"
+                    class="font-bold text-blue-600 text-xl">
+                    0/0
+                </span>
+            </p>
+
+            <button onclick="window.location.reload();"
+                class="px-8 py-3.5 bg-gray-900 text-white rounded-full font-medium hover:bg-black transition shadow-lg">
+                Start New Session
+            </button>
+        </div>
+
+        <!-- Admin -->
+        <div id="view-admin" class="hidden">
+
+            <div class="flex justify-between items-center mb-6 pb-4 border-b border-gray-100">
+
+                <h2 class="text-2xl font-bold text-gray-900">
+                    Live Database Manager
+                </h2>
+
+                <button onclick="showView('view-setup')"
+                    class="text-sm font-medium text-blue-600 hover:bg-blue-50 px-4 py-2 rounded-full">
+                    Close Admin
+                </button>
+            </div>
+
+            <div class="bg-white border border-gray-200 rounded-3xl p-6 space-y-4 text-sm shadow-sm">
+
+                <p class="text-gray-600 mb-2">
+                    Adding questions here will push them directly to Google Sheets instantly.
+                </p>
+
+                <div id="form-feedback"
+                    class="hidden font-bold p-3 rounded-xl">
+                </div>
+
+                <textarea id="ad-q"
+                    placeholder="Question Text *"
+                    class="w-full border border-gray-200 rounded-2xl p-4 bg-gray-50"
+                    rows="2"></textarea>
+
+                <div class="grid gap-3">
+
+                    <div class="flex items-center gap-3 bg-gray-50 p-2 rounded-xl border border-gray-200">
+                        <input type="radio" name="ad-correct" value="0" checked class="ml-3">
+                        <input type="text" id="ad-o0" placeholder="Option 1 *"
+                            class="w-full bg-transparent border-none outline-none">
+                    </div>
+
+                    <div class="flex items-center gap-3 bg-gray-50 p-2 rounded-xl border border-gray-200">
+                        <input type="radio" name="ad-correct" value="1" class="ml-3">
+                        <input type="text" id="ad-o1" placeholder="Option 2 *"
+                            class="w-full bg-transparent border-none outline-none">
+                    </div>
+
+                    <div class="flex items-center gap-3 bg-gray-50 p-2 rounded-xl border border-gray-200">
+                        <input type="radio" name="ad-correct" value="2" class="ml-3">
+                        <input type="text" id="ad-o2" placeholder="Option 3 *"
+                            class="w-full bg-transparent border-none outline-none">
+                    </div>
+
+                    <div class="flex items-center gap-3 bg-gray-50 p-2 rounded-xl border border-gray-200">
+                        <input type="radio" name="ad-correct" value="3" class="ml-3">
+                        <input type="text" id="ad-o3" placeholder="Option 4 *"
+                            class="w-full bg-transparent border-none outline-none">
+                    </div>
+                </div>
+
+                <textarea id="ad-rationale"
+                    placeholder="Rationale (Why is it correct?)"
+                    class="w-full border border-gray-200 rounded-2xl p-4 bg-gray-50"
+                    rows="2"></textarea>
+
+                <input type="text"
+                    id="ad-hint"
+                    placeholder="Hint text (Optional)"
+                    class="w-full border border-gray-200 rounded-2xl p-4 bg-gray-50">
+
+                <button id="submit-btn"
+                    onclick="pushToGoogleSheets()"
+                    class="w-full py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition mt-2">
+                    Publish to Database
+                </button>
+            </div>
+        </div>
+
+        <!-- Admin Access -->
+        <button onclick="verifyAdmin()"
+            class="absolute bottom-4 right-6 text-xs font-medium text-gray-300 hover:text-gray-500 uppercase">
+            Admin
+        </button>
+
     </div>
 
     <script>
+
         // ==========================================
-        // 🚨 ADD YOUR GOOGLE APPS SCRIPT URL BELOW! 
+        // GOOGLE APPS SCRIPT URL
         // ==========================================
-        const API_URL = "https://script.google.com/macros/s/AKfycbypzHAEAf8DQTKpuv9BTrOS5Dk3Hg9p8eFxxHvdxOAqB12xZMG0woppdbRLqD8g765m/exec";
-        
+        const API_URL =
+            "https://script.google.com/macros/s/AKfycbypzHAEAf8DQTKpuv9BTrOS5Dk3Hg9p8eFxxHvdxOAqB12xZMG0woppdbRLqD8g765m/exec";
+
         let allQuestions = [];
-        let state = { activeQuestions: [], currentIndex: 0, stats: { right: 0, wrong: 0, skipped: 0 }, answeredCurrent: false };
+
+        let state = {
+            activeQuestions: [],
+            currentIndex: 0,
+            stats: {
+                right: 0,
+                wrong: 0,
+                skipped: 0
+            },
+            answeredCurrent: false
+        };
+
         const chars = ['A', 'B', 'C', 'D', 'E'];
 
-        function escapeHTML(str) { return str ? str.toString().replace(/[&<>'"]/g, tag => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'}[tag] || tag)) : ""; }
-        function shuffleArray(arr) { for(let i=arr.length-1; i>0; i--) { const j = Math.floor(Math.random() * (i+1)); [arr[i], arr[j]] = [arr[j], arr[i]]; } return arr; }
+        // ==========================================
+        // HELPERS
+        // ==========================================
+
+        function escapeHTML(str) {
+            return str
+                ? str.toString().replace(/[&<>'"]/g, tag => ({
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    "'": '&#39;',
+                    '"': '&quot;'
+                }[tag] || tag))
+                : "";
+        }
+
+        function shuffleArray(arr) {
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        // ==========================================
+        // INITIALIZATION
+        // ==========================================
 
         async function init() {
-            // Check if URL is still the placeholder text
-            if(API_URL === "https://script.google.com/macros/s/AKfycbypzHAEAf8DQTKpuv9BTrOS5Dk3Hg9p8eFxxHvdxOAqB12xZMG0woppdbRLqD8g765m/exec") {
-                document.getElementById('view-loading').innerHTML = `<p class="text-red-500 font-bold p-6 bg-red-50 rounded-2xl">Setup Required:<br>Paste your Web App URL at line 178.</p>`;
-                return; // Stop execution
-            }
-            
+
             try {
-                // Fetch data from Google Apps Script
-                const response = await fetch(API_URL, { redirect: 'follow' });
+
+                const response = await fetch(API_URL, {
+                    method: 'GET',
+                    redirect: 'follow'
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP Error: ${response.status}`);
+                }
+
                 allQuestions = await response.json();
-                
-                document.getElementById('db-count').innerText = allQuestions.length;
+
+                if (!Array.isArray(allQuestions)) {
+                    throw new Error("Invalid API response");
+                }
+
+                document.getElementById('db-count').innerText =
+                    allQuestions.length;
+
                 showView('view-setup');
+
             } catch (err) {
+
                 console.error(err);
-                document.getElementById('view-loading').innerHTML = `<p class="text-red-500 font-bold p-6 bg-red-50 rounded-2xl">Failed to connect to API. Please ensure your Google Sheet has data and the App Script is deployed as 'Anyone'.</p>`;
+
+                document.getElementById('view-loading').innerHTML = `
+                    <p class="text-red-500 font-bold p-6 bg-red-50 rounded-2xl">
+                        Failed to connect to Google Sheets API.
+                        <br><br>
+                        Make sure:
+                        <br>• Apps Script is deployed
+                        <br>• Access is set to "Anyone"
+                        <br>• Google Sheet contains data
+                    </p>
+                `;
             }
         }
+
+        // ==========================================
+        // VIEW SWITCHING
+        // ==========================================
 
         function showView(viewId) {
-            ['view-loading', 'view-setup', 'view-quiz', 'view-summary', 'view-admin'].forEach(id => document.getElementById(id).classList.add('hidden'));
-            document.getElementById(viewId).classList.remove('hidden');
+
+            [
+                'view-loading',
+                'view-setup',
+                'view-quiz',
+                'view-summary',
+                'view-admin'
+            ].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+
+            document.getElementById(viewId)
+                .classList.remove('hidden');
         }
 
+        // ==========================================
+        // QUIZ START
+        // ==========================================
+
         function startQuiz(count) {
-            if(allQuestions.length === 0) return alert("Database is empty.");
-            let qCount = count === 'all' ? allQuestions.length : Math.min(count, allQuestions.length);
-            let shuffledQs = shuffleArray([...allQuestions]).slice(0, qCount);
-            state = { activeQuestions: shuffledQs.map(q => ({ ...q, options: shuffleArray([...q.options]) })), currentIndex: 0, stats: { right: 0, wrong: 0, skipped: 0 }, answeredCurrent: false };
+
+            if (allQuestions.length === 0) {
+                alert("Database is empty.");
+                return;
+            }
+
+            let qCount =
+                count === 'all'
+                    ? allQuestions.length
+                    : Math.min(count, allQuestions.length);
+
+            let shuffledQs =
+                shuffleArray([...allQuestions]).slice(0, qCount);
+
+            state = {
+                activeQuestions: shuffledQs.map(q => ({
+                    ...q,
+                    options: shuffleArray([...q.options])
+                })),
+                currentIndex: 0,
+                stats: {
+                    right: 0,
+                    wrong: 0,
+                    skipped: 0
+                },
+                answeredCurrent: false
+            };
+
             renderQuestion();
+
             showView('view-quiz');
         }
 
-        function renderQuestion() {
-            const q = state.activeQuestions[state.currentIndex];
-            state.answeredCurrent = false;
-            document.getElementById('question-counter').innerText = `Question ${state.currentIndex + 1} of ${state.activeQuestions.length}`;
-            document.getElementById('progress-bar').style.width = `${((state.currentIndex) / state.activeQuestions.length) * 100}%`;
-            document.getElementById('question-text').innerText = q.question;
-            
-            const hintBox = document.getElementById('hint-box');
-            hintBox.innerHTML = q.hint ? `<strong>Hint:</strong> ${escapeHTML(q.hint)}` : "No hint available.";
-            hintBox.classList.add('hidden');
-            document.getElementById('rationale-box').classList.add('hidden');
-            document.getElementById('next-btn').classList.add('hidden');
-            document.getElementById('skip-btn').classList.remove('hidden');
+        // ==========================================
+        // RENDER QUESTION
+        // ==========================================
 
-            const container = document.getElementById('options-container');
+        function renderQuestion() {
+
+            const q =
+                state.activeQuestions[state.currentIndex];
+
+            state.answeredCurrent = false;
+
+            document.getElementById('question-counter').innerText =
+                `Question ${state.currentIndex + 1} of ${state.activeQuestions.length}`;
+
+            document.getElementById('progress-bar').style.width =
+                `${((state.currentIndex) / state.activeQuestions.length) * 100}%`;
+
+            document.getElementById('question-text').innerText =
+                q.question;
+
+            const hintBox =
+                document.getElementById('hint-box');
+
+            hintBox.innerHTML =
+                q.hint
+                    ? `<strong>Hint:</strong> ${escapeHTML(q.hint)}`
+                    : "No hint available.";
+
+            hintBox.classList.add('hidden');
+
+            document.getElementById('rationale-box')
+                .classList.add('hidden');
+
+            document.getElementById('next-btn')
+                .classList.add('hidden');
+
+            document.getElementById('skip-btn')
+                .classList.remove('hidden');
+
+            const container =
+                document.getElementById('options-container');
+
             container.innerHTML = '';
+
             q.options.forEach((opt, idx) => {
-                const btn = document.createElement('button');
-                btn.className = "option-btn w-full text-left p-5 rounded-2xl flex items-center gap-4 bg-white font-medium text-gray-700";
-                btn.innerHTML = `<span class="flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 text-gray-500 font-bold">${chars[idx]}</span> <span>${escapeHTML(opt.text)}</span>`;
-                btn.onclick = () => handleAnswer(opt.isCorrect, btn, q.options);
+
+                const btn =
+                    document.createElement('button');
+
+                btn.className =
+                    "option-btn w-full text-left p-5 rounded-2xl flex items-center gap-4 bg-white font-medium text-gray-700";
+
+                btn.innerHTML = `
+                    <span class="flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 text-gray-500 font-bold">
+                        ${chars[idx]}
+                    </span>
+
+                    <span>${escapeHTML(opt.text)}</span>
+                `;
+
+                btn.onclick = () =>
+                    handleAnswer(opt.isCorrect, btn, q.options);
+
                 container.appendChild(btn);
             });
         }
 
-        function toggleHint() { document.getElementById('hint-box').classList.toggle('hidden'); }
+        // ==========================================
+        // HINT TOGGLE
+        // ==========================================
+
+        function toggleHint() {
+            document.getElementById('hint-box')
+                .classList.toggle('hidden');
+        }
+
+        // ==========================================
+        // HANDLE ANSWER
+        // ==========================================
 
         function handleAnswer(isCorrect, btn, options) {
-            if (state.answeredCurrent) return;
-            state.answeredCurrent = true;
-            const q = state.activeQuestions[state.currentIndex];
-            const btns = document.querySelectorAll('.option-btn');
-            btns.forEach(b => b.disabled = true);
-            document.getElementById('skip-btn').classList.add('hidden');
-            document.getElementById('next-btn').classList.remove('hidden');
 
-            const rationale = document.getElementById('rationale-box');
+            if (state.answeredCurrent) return;
+
+            state.answeredCurrent = true;
+
+            const q =
+                state.activeQuestions[state.currentIndex];
+
+            const btns =
+                document.querySelectorAll('.option-btn');
+
+            btns.forEach(b => b.disabled = true);
+
+            document.getElementById('skip-btn')
+                .classList.add('hidden');
+
+            document.getElementById('next-btn')
+                .classList.remove('hidden');
+
+            const rationale =
+                document.getElementById('rationale-box');
+
             rationale.classList.remove('hidden');
-            const safeRat = q.rationale ? escapeHTML(q.rationale) : "No explanation provided.";
+
+            const safeRat =
+                q.rationale
+                    ? escapeHTML(q.rationale)
+                    : "No explanation provided.";
 
             if (isCorrect) {
-                state.stats.right++; btn.classList.add('selected-correct');
-                rationale.className = "p-5 rounded-2xl mb-8 text-sm bg-[#e6f4ea] text-[#137333]";
-                rationale.innerHTML = `<div class="font-bold text-lg mb-1">✅ Correct!</div>${safeRat}`;
+
+                state.stats.right++;
+
+                btn.classList.add('selected-correct');
+
+                rationale.className =
+                    "p-5 rounded-2xl mb-8 text-sm bg-[#e6f4ea] text-[#137333]";
+
+                rationale.innerHTML = `
+                    <div class="font-bold text-lg mb-1">
+                        ✅ Correct!
+                    </div>
+                    ${safeRat}
+                `;
+
             } else {
-                state.stats.wrong++; btn.classList.add('selected-wrong');
-                options.forEach((opt, idx) => { if(opt.isCorrect) btns[idx].classList.add('actual-correct'); });
-                rationale.className = "p-5 rounded-2xl mb-8 text-sm bg-[#fce8e6] text-[#c5221f]";
-                rationale.innerHTML = `<div class="font-bold text-lg mb-1">❌ Incorrect</div>${safeRat}`;
+
+                state.stats.wrong++;
+
+                btn.classList.add('selected-wrong');
+
+                options.forEach((opt, idx) => {
+                    if (opt.isCorrect) {
+                        btns[idx].classList.add('actual-correct');
+                    }
+                });
+
+                rationale.className =
+                    "p-5 rounded-2xl mb-8 text-sm bg-[#fce8e6] text-[#c5221f]";
+
+                rationale.innerHTML = `
+                    <div class="font-bold text-lg mb-1">
+                        ❌ Incorrect
+                    </div>
+                    ${safeRat}
+                `;
             }
         }
 
-        function handleSkip() { if(!state.answeredCurrent) { state.stats.skipped++; nextQuestion(); } }
-        function nextQuestion() { state.currentIndex++; if(state.currentIndex >= state.activeQuestions.length) showSummary(); else renderQuestion(); }
-        
-        function showSummary() {
-            showView('view-summary');
-            document.getElementById('final-score').innerText = `${state.stats.right}/${state.activeQuestions.length}`;
+        // ==========================================
+        // SKIP / NEXT
+        // ==========================================
+
+        function handleSkip() {
+
+            if (!state.answeredCurrent) {
+                state.stats.skipped++;
+                nextQuestion();
+            }
         }
 
-        // --- Live Google Sheets Admin API ---
-        function verifyAdmin() {
-            if(prompt("Enter Password:") === "admin123") showView('view-admin');
+        function nextQuestion() {
+
+            state.currentIndex++;
+
+            if (state.currentIndex >= state.activeQuestions.length) {
+                showSummary();
+            } else {
+                renderQuestion();
+            }
         }
+
+        // ==========================================
+        // SUMMARY
+        // ==========================================
+
+        function showSummary() {
+
+            showView('view-summary');
+
+            document.getElementById('final-score').innerText =
+                `${state.stats.right}/${state.activeQuestions.length}`;
+        }
+
+        // ==========================================
+        // ADMIN
+        // ==========================================
+
+        function verifyAdmin() {
+
+            if (prompt("Enter Password:") === "admin123") {
+                showView('view-admin');
+            }
+        }
+
+        // ==========================================
+        // PUSH TO GOOGLE SHEETS
+        // ==========================================
 
         async function pushToGoogleSheets() {
-            const btn = document.getElementById('submit-btn');
-            const fb = document.getElementById('form-feedback');
-            
-            const q = document.getElementById('ad-q').value.trim();
-            const o0 = document.getElementById('ad-o0').value.trim();
-            const o1 = document.getElementById('ad-o1').value.trim();
-            const o2 = document.getElementById('ad-o2').value.trim();
-            const o3 = document.getElementById('ad-o3').value.trim();
-            
-            if(!q || !o0 || !o1 || !o2 || !o3) {
-                fb.className = "p-3 rounded-xl bg-red-50 text-red-600 mb-4 font-bold block";
-                fb.innerText = "Error: Question and all 4 options are required.";
+
+            const btn =
+                document.getElementById('submit-btn');
+
+            const fb =
+                document.getElementById('form-feedback');
+
+            const q =
+                document.getElementById('ad-q').value.trim();
+
+            const o0 =
+                document.getElementById('ad-o0').value.trim();
+
+            const o1 =
+                document.getElementById('ad-o1').value.trim();
+
+            const o2 =
+                document.getElementById('ad-o2').value.trim();
+
+            const o3 =
+                document.getElementById('ad-o3').value.trim();
+
+            if (!q || !o0 || !o1 || !o2 || !o3) {
+
+                fb.className =
+                    "p-3 rounded-xl bg-red-50 text-red-600 mb-4 font-bold block";
+
+                fb.innerText =
+                    "Error: Question and all 4 options are required.";
+
                 return;
             }
 
             const payload = {
                 question: q,
-                options: [ {text: o0}, {text: o1}, {text: o2}, {text: o3} ],
-                correctIndex: parseInt(document.querySelector('input[name="ad-correct"]:checked').value),
-                rationale: document.getElementById('ad-rationale').value.trim(),
-                hint: document.getElementById('ad-hint').value.trim()
+                options: [
+                    { text: o0 },
+                    { text: o1 },
+                    { text: o2 },
+                    { text: o3 }
+                ],
+                correctIndex: parseInt(
+                    document.querySelector('input[name="ad-correct"]:checked').value
+                ),
+                rationale:
+                    document.getElementById('ad-rationale').value.trim(),
+                hint:
+                    document.getElementById('ad-hint').value.trim()
             };
 
             btn.disabled = true;
             btn.innerText = "Publishing to Sheets... ⏳";
-            
+
             try {
-                // FIXED: Setting Content-Type to text/plain bypasses restrictive browser CORS blocking for Google Apps Script.
-                await fetch(API_URL, {
+
+                const response = await fetch(API_URL, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    headers: {
+                        'Content-Type': 'text/plain;charset=utf-8'
+                    },
                     body: JSON.stringify(payload),
                     redirect: 'follow'
                 });
-                
+
+                if (!response.ok) {
+                    throw new Error(`HTTP Error: ${response.status}`);
+                }
+
                 // Clear Form
-                ['ad-q','ad-o0','ad-o1','ad-o2','ad-o3','ad-rationale','ad-hint'].forEach(id => document.getElementById(id).value = '');
-                
-                // Update local array so it's ready immediately
-                payload.options[payload.correctIndex].isCorrect = true; 
+                [
+                    'ad-q',
+                    'ad-o0',
+                    'ad-o1',
+                    'ad-o2',
+                    'ad-o3',
+                    'ad-rationale',
+                    'ad-hint'
+                ].forEach(id => {
+                    document.getElementById(id).value = '';
+                });
+
+                // Update local data
+                payload.options[payload.correctIndex].isCorrect = true;
+
                 allQuestions.push(payload);
-                
-                fb.className = "p-3 rounded-xl bg-green-50 text-green-700 mb-4 font-bold block";
-                fb.innerText = "✅ Successfully saved to Google Sheets!";
-            } catch(e) {
+
+                document.getElementById('db-count').innerText =
+                    allQuestions.length;
+
+                fb.className =
+                    "p-3 rounded-xl bg-green-50 text-green-700 mb-4 font-bold block";
+
+                fb.innerText =
+                    "✅ Successfully saved to Google Sheets!";
+
+            } catch (e) {
+
                 console.error(e);
-                fb.className = "p-3 rounded-xl bg-red-50 text-red-600 mb-4 font-bold block";
-                fb.innerText = "❌ Network Error. Ensure Apps Script is published to 'Anyone'.";
-            } finally {
+
+                fb.className =
+                    "p-3 rounded-xl bg-red-50 text-red-600 mb-4 font-bold block";
+
+                fb.innerText =
+                    "❌ Network Error. Ensure Apps Script is deployed to 'Anyone'.";
+            }
+
+            finally {
+
                 btn.disabled = false;
+
                 btn.innerText = "Publish to Database";
             }
         }
-        
+
+        // ==========================================
+        // START APP
+        // ==========================================
+
         window.onload = init;
+
     </script>
 </body>
 </html>
+```
